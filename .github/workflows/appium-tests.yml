@@ -1,0 +1,94 @@
+name: Parallel Appium Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+
+jobs:
+  test:
+    runs-on: macos-latest  # macOS for iOS testing
+    
+    strategy:
+      matrix:
+        device-tier: [premium, standard]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install Appium
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+          appium driver install xcuitest
+      
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+      
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses
+      
+      - name: Create Android Emulator
+        run: |
+          echo "Creating emulator..."
+          avdmanager create avd \
+            -n test_emulator \
+            -k "system-images;android-33;google_apis;x86_64" \
+            --force
+      
+      - name: Start Android Emulator
+        run: |
+          emulator -avd test_emulator -no-audio -no-window &
+          adb wait-for-device
+          adb devices
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      
+      - name: Start Appium Servers
+        run: ./scripts/start-appium-nodes.sh
+      
+      - name: Run Tests
+        run: |
+          mvn clean test \
+            -Dparallel.threads=4 \
+            -Ddevice.tier=${{ matrix.device-tier }}
+      
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports-${{ matrix.device-tier }}
+          path: |
+            reports/
+            target/surefire-reports/
+      
+      - name: Publish Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results (${{ matrix.device-tier }})
+          path: 'target/surefire-reports/*.xml'
+          reporter: java-junit
+      
+      - name: Stop Appium Servers
+        if: always()
+        run: ./scripts/stop-appium-nodes.sh

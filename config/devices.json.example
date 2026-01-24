@@ -1,0 +1,38 @@
+[
+  {
+    "deviceName": "Samsung Galaxy S21",
+    "cloudDeviceName": "Galaxy S21",
+    "platformName": "Android",
+    "platformVersion": "12",
+    "tier": "premium",
+    "executionType": "lambdatest",
+    "cloudProvider": "lambdatest",
+    "cloudUsername": "your-lambdatest-username",
+    "cloudAccessKey": "your-lambdatest-access-key",
+    "tunnelId": "your-tunnel-id",
+    "cloudAppUrl": "lt://YOUR_APP_ID"
+  },
+  {
+    "deviceName": "iPhone 13",
+    "cloudDeviceName": "iPhone 13",
+    "platformName": "iOS",
+    "platformVersion": "15",
+    "tier": "premium",
+    "executionType": "browserstack",
+    "cloudProvider": "browserstack",
+    "cloudUsername": "your-browserstack-username",
+    "cloudAccessKey": "your-browserstack-access-key",
+    "cloudAppUrl": "bs://YOUR_APP_ID"
+  },
+  {
+    "udid": "emulator-5554",
+    "deviceName": "Pixel_7_Emulator",
+    "platformName": "Android",
+    "platformVersion": "13",
+    "tier": "premium",
+    "executionType": "local",
+    "appiumPort": 4723,
+    "systemPort": 8200,
+    "chromedriverPort": 9515
+  }
+]

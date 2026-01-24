@@ -1,0 +1,41 @@
+[
+  {
+    "deviceName": "Samsung Galaxy S21",
+    "cloudDeviceName": "Galaxy S21",
+    "platformName": "Android",
+    "platformVersion": "12",
+    "tier": "premium",
+    "executionType": "lambdatest",
+    "cloudProvider": "lambdatest",
+    "tunnelId": "GFSLHO15366-i1ez8h0d4gs",
+    "cloudAppUrl": "lt://APP10160341531766737548177104"
+  },
+
+
+  {
+    "deviceName": "iPhone 15 Pro",
+    "cloudDeviceName": "iPhone 15 Pro",
+    "platformName": "IOS",
+    "platformVersion": "18",
+    "tier": "premium",
+    "executionType": "lambdatest",
+    "cloudProvider": "lambdatest",
+    "tunnelId": "GFSLHO15366-i1ez8h0d4gs",
+    "cloudAppUrl": "lt://APP10160192331767086624827150"
+
+  },
+
+  {
+    "deviceName": "iPhone 15 Pro",
+    "cloudDeviceName": "iPhone 15 Pro",
+    "platformName": "IOS",
+    "platformVersion": "17",
+    "tier": "standard",
+    "executionType": "lambdatest",
+    "cloudProvider": "lambdatest",
+    "tunnelId": "GFSLHO15366-i1ez8h0d4gs",
+    "cloudAppUrl": "lt://APP10160192331767086624827150"
+
+  }
+
+]
