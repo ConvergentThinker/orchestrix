@@ -74,11 +74,39 @@ public class DevicePool {
                 throw new RuntimeException("No devices found in config/devices.json");
             }
             
+            // Port manager for auto-allocation
+            PortManager portManager = PortManager.getInstance();
+            
             // Add each device to available pool
             for (DeviceConfig device : devices) {
                 if (device == null) {
                     logger.warn("Skipping null device in configuration");
                     continue;
+                }
+                
+                // Auto-allocate Appium port if not specified (0 or negative means auto-allocate)
+                // NOTE: systemPort/chromedriverPort are allocated per SESSION in DriverFactory,
+                // not per device, because multiple parallel sessions on same device need unique ports
+                // Only for local devices
+                if (!device.isCloudDevice()) {
+                    // Auto-allocate Appium port if not specified (one Appium server per device)
+                    if (device.getAppiumPort() <= 0) {
+                        int appiumPort = portManager.allocateAppiumPort();
+                        device.setAppiumPort(appiumPort);
+                        logger.debug("Auto-allocated Appium port {} for device: {}", 
+                            appiumPort, device.getDeviceName());
+                    }
+                    
+                    // iOS WDA port can be per device (one WDA per device)
+                    if ("iOS".equalsIgnoreCase(device.getPlatformName())) {
+                        if (device.getWdaLocalPort() <= 0) {
+                            int wdaPort = portManager.allocateWdaPort();
+                            device.setWdaLocalPort(wdaPort);
+                            logger.debug("Auto-allocated WDA port {} for device: {}", 
+                                wdaPort, device.getDeviceName());
+                        }
+                    }
+                    // Android systemPort/chromedriverPort are allocated per SESSION in DriverFactory
                 }
                 
                 // Generate unique key for device
@@ -97,11 +125,23 @@ public class DevicePool {
                 // Create lock for this device
                 deviceLocks.put(deviceKey, new ReentrantLock());
                 
-                logger.info("Loaded device: {} ({}) - Tier: {} - Execution: {}", 
+                // Log port information
+                String portInfo = "";
+                if (!device.isCloudDevice()) {
+                    portInfo = String.format(" [Appium:%d", device.getAppiumPort());
+                    if ("iOS".equalsIgnoreCase(device.getPlatformName())) {
+                        portInfo += String.format(", WDA:%d", device.getWdaLocalPort());
+                    }
+                    // Android systemPort/chromedriverPort allocated per session, not logged here
+                    portInfo += "]";
+                }
+                
+                logger.info("Loaded device: {} ({}) - Tier: {} - Execution: {}{}", 
                     device.getDeviceName(), 
                     deviceKey, 
                     device.getTier(),
-                    device.getExecutionType());
+                    device.getExecutionType(),
+                    portInfo);
             }
             
             if (availableDevices.isEmpty()) {
@@ -195,10 +235,10 @@ public class DevicePool {
     }
     
     /**
-     * Get tier fallback hierarchy
-     * Premium can fallback to standard or basic
-     * Standard can fallback to basic
-     * Basic has no fallback
+     * Get tier fallback hierarchy.
+     * Downward: premium → standard → basic.
+     * Upward: when no same/lower-tier device exists, allow using a higher-tier device
+     * (e.g. standard request can use premium if no standard/basic).
      */
     private List<String> getTierFallback(String tier) {
         List<String> fallback = new ArrayList<>();
@@ -209,8 +249,11 @@ public class DevicePool {
             fallback.add("basic");
         } else if ("standard".equalsIgnoreCase(tier)) {
             fallback.add("basic");
+            fallback.add("premium"); // Use premium device when no standard/basic
+        } else if ("basic".equalsIgnoreCase(tier)) {
+            fallback.add("standard");
+            fallback.add("premium"); // Use standard/premium when no basic
         }
-        // basic has no fallback
         
         return fallback;
     }
@@ -347,5 +390,110 @@ public class DevicePool {
      */
     public List<DeviceConfig> getAllocatedDevices() {
         return new ArrayList<>(allocatedDevices.values());
+    }
+    
+    /**
+     * Get total number of devices in pool
+     * Useful for determining optimal thread count
+     */
+    public int getTotalDeviceCount() {
+        return availableDevices.size() + allocatedDevices.size();
+    }
+    
+    /**
+     * Get number of available devices
+     */
+    public int getAvailableDeviceCount() {
+        return availableDevices.size();
+    }
+    
+    /**
+     * Wait for device to become available with intelligent timeout logic
+     * 
+     * Wait Strategy:
+     * - Poll every 10 seconds to try allocating device
+     * - Check if other tests are running every 30 seconds
+     * - If other tests are running: wait indefinitely (devices will be released)
+     * - If no other tests are running: enforce 60 second timeout
+     * 
+     * @param tier Device tier
+     * @return Allocated device or null if timeout (only when no other tests running)
+     */
+    public DeviceConfig allocateDeviceWithWait(String tier) {
+        final long POLL_INTERVAL_MS = 10000; // Poll every 10 seconds
+        final long OTHER_TESTS_CHECK_INTERVAL_MS = 30000; // Check other tests every 30 seconds
+        final long TIMEOUT_WHEN_NO_OTHER_TESTS_MS = 60000; // 60 seconds timeout when no other tests
+        
+        long startTime = System.currentTimeMillis();
+        long lastOtherTestsCheck = startTime;
+        boolean hasSeenOtherTestsRunning = false;
+        
+        logger.info("⏳ Waiting for device (tier: {}). Polling every {}s, checking other tests every {}s", 
+            tier, POLL_INTERVAL_MS / 1000, OTHER_TESTS_CHECK_INTERVAL_MS / 1000);
+        
+        while (true) {
+            // Try to allocate device
+            DeviceConfig device = allocateDevice(tier);
+            if (device != null) {
+                if (hasSeenOtherTestsRunning) {
+                    logger.info("✓ Device allocated after waiting (other tests were running)");
+                }
+                return device;
+            }
+            
+            // Check if other tests are running (every 30 seconds)
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastOtherTestsCheck >= OTHER_TESTS_CHECK_INTERVAL_MS) {
+                boolean otherTestsRunning = areOtherTestsRunning();
+                
+                if (otherTestsRunning) {
+                    hasSeenOtherTestsRunning = true;
+                    logger.debug("Other tests are running - will wait indefinitely for device release");
+                } else {
+                    // No other tests running - check timeout
+                    long elapsedTime = currentTime - startTime;
+                    if (elapsedTime >= TIMEOUT_WHEN_NO_OTHER_TESTS_MS) {
+                        logger.warn("✗ Timeout waiting for device (tier: {}) after {}ms. " +
+                            "No other tests running, so no devices will be released.", 
+                            tier, TIMEOUT_WHEN_NO_OTHER_TESTS_MS);
+                        return null;
+                    } else {
+                        logger.debug("No other tests running. Timeout in {}ms if no device becomes available", 
+                            TIMEOUT_WHEN_NO_OTHER_TESTS_MS - elapsedTime);
+                    }
+                }
+                
+                lastOtherTestsCheck = currentTime;
+            }
+            
+            // Wait before next poll
+            try {
+                Thread.sleep(POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Interrupted while waiting for device");
+                return null;
+            }
+        }
+    }
+    
+    /**
+     * Check if other tests are currently running
+     * Determined by checking if any devices are allocated
+     * 
+     * @return true if other tests are running (devices allocated), false otherwise
+     */
+    private boolean areOtherTestsRunning() {
+        // If there are allocated devices, other tests are running
+        boolean otherTestsRunning = !allocatedDevices.isEmpty();
+        
+        if (otherTestsRunning) {
+            logger.debug("Other tests detected: {} device(s) currently allocated", 
+                allocatedDevices.size());
+        } else {
+            logger.debug("No other tests running: all devices available");
+        }
+        
+        return otherTestsRunning;
     }
 }

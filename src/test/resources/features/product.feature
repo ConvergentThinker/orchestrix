@@ -7,7 +7,7 @@ Feature: Product Browsing and Cart Management
   Background:
     Given the app is launched
 
-  @standard @TC001
+  @premium @TC001
   Scenario: Successful login with valid credentials
     Given I am on the login page
     When I login with username "testuser@example.com" and password "Test@123"

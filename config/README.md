@@ -16,10 +16,14 @@ Device farm configuration file. Defines all available devices for parallel test 
     "platformName": "Android" or "iOS",
     "platformVersion": "Platform version",
     "tier": "premium" | "standard" | "basic",
-    "appiumPort": 4723,
-    "systemPort": 8200,        // Android only
-    "chromedriverPort": 9515,  // Android only
-    "wdaLocalPort": 8100       // iOS only
+    "executionType": "local",  // "local" | "lambdatest" | "browserstack"
+    "appPackage": "com.yourapp.package",  // Android only (optional)
+    "appActivity": "com.yourapp.MainActivity",  // Android only (optional)
+    // Ports are OPTIONAL - auto-allocated if omitted:
+    "appiumPort": 4723,        // Optional: auto-allocated if omitted
+    "systemPort": 8200,        // Optional: Android only, auto-allocated if omitted
+    "chromedriverPort": 9515,  // Optional: Android only, auto-allocated if omitted
+    "wdaLocalPort": 8100       // Optional: iOS only, auto-allocated if omitted
   }
 ]
 ```
@@ -35,10 +39,14 @@ Device farm configuration file. Defines all available devices for parallel test 
 - **iOS Real Device**: Use Xcode or `instruments -s devices`
 
 **Port Configuration:**
-- Each device must have a unique `appiumPort`
-- Android devices need unique `systemPort` and `chromedriverPort`
-- iOS devices need unique `wdaLocalPort`
-- Ports should not conflict with other services
+- **Ports are OPTIONAL** - Framework auto-allocates unique ports if not specified
+- If you specify ports, ensure they are unique across all devices
+- Auto-allocation prevents conflicts and simplifies configuration
+- Port ranges:
+  - Appium: 4723-4800
+  - Android SystemPort: 8200-8300
+  - Android ChromeDriver: 9515-9600
+  - iOS WDA: 8100-8200
 
 ### retry-config.json
 Retry policy configuration for test execution.
@@ -77,8 +85,9 @@ Retry policy configuration for test execution.
 
 1. Edit `devices.json`
 2. Add/remove/modify device entries
-3. Ensure unique UDIDs and ports
-4. Restart tests (framework loads config on startup)
+3. **Ports are optional** - framework auto-allocates if not specified
+4. Ensure unique UDIDs (ports are handled automatically)
+5. Restart tests (framework loads config on startup)
 
 ### Updating Retry Configuration
 
@@ -88,6 +97,7 @@ Retry policy configuration for test execution.
 
 ## Example: Adding a New Device
 
+**Minimal Configuration (Ports Auto-Allocated):**
 ```json
 {
   "udid": "your-device-udid",
@@ -95,9 +105,27 @@ Retry policy configuration for test execution.
   "platformName": "Android",
   "platformVersion": "13",
   "tier": "standard",
+  "executionType": "local",
+  "appPackage": "com.yourapp.package",
+  "appActivity": "com.yourapp.MainActivity"
+  // Ports auto-allocated automatically!
+}
+```
+
+**With Explicit Ports (Optional):**
+```json
+{
+  "udid": "your-device-udid",
+  "deviceName": "Your Device Name",
+  "platformName": "Android",
+  "platformVersion": "13",
+  "tier": "standard",
+  "executionType": "local",
   "appiumPort": 4727,
   "systemPort": 8203,
-  "chromedriverPort": 9518
+  "chromedriverPort": 9518,
+  "appPackage": "com.yourapp.package",
+  "appActivity": "com.yourapp.MainActivity"
 }
 ```
 

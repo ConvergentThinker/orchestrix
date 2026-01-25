@@ -23,21 +23,47 @@ jq -c '.[]' config/devices.json | while read device; do
     PORT=$(echo "$device" | jq -r '.appiumPort')
     DEVICE_NAME=$(echo "$device" | jq -r '.deviceName')
     PLATFORM=$(echo "$device" | jq -r '.platformName')
+    EXECUTION_TYPE=$(echo "$device" | jq -r '.executionType // "local"')
     
-    echo "Starting Appium for: $DEVICE_NAME on port $PORT"
-    
-    # Start Appium server
-    appium --port "$PORT" \
-           --allow-insecure chromedriver_autodownload \
-           --log-timestamp \
-           --log "logs/appium/appium-${PORT}.log" \
-           --default-capabilities "{\"udid\":\"$UDID\"}" &
-    
-    # Save PID
-    echo $! > "logs/appium/appium-${PORT}.pid"
-    
-    sleep 2
+    # Only start Appium for local devices
+    if [ "$EXECUTION_TYPE" = "local" ]; then
+        # Check if port is already in use
+        if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+            echo "⚠️  Port $PORT is already in use. Skipping $DEVICE_NAME"
+            continue
+        fi
+        
+        echo "Starting Appium for: $DEVICE_NAME on port $PORT"
+        
+        # Start Appium server
+        appium --port "$PORT" \
+               --allow-insecure chromedriver_autodownload \
+               --log-timestamp \
+               --log "logs/appium/appium-${PORT}.log" \
+               --default-capabilities "{\"udid\":\"$UDID\"}" &
+        
+        # Save PID
+        APPIUM_PID=$!
+        echo $APPIUM_PID > "logs/appium/appium-${PORT}.pid"
+        
+        # Wait for server to start
+        echo "Waiting for Appium server to start on port $PORT..."
+        sleep 3
+        
+        # Verify server is running (Appium 2+ uses /status, older uses /wd/hub/status)
+        if curl -sf "http://127.0.0.1:$PORT/status" > /dev/null 2>&1 || \
+           curl -sf "http://127.0.0.1:$PORT/wd/hub/status" > /dev/null 2>&1; then
+            echo "✓ Appium server started successfully on port $PORT"
+        else
+            echo "✗ Failed to start Appium server on port $PORT. Check logs: logs/appium/appium-${PORT}.log"
+        fi
+    else
+        echo "⏭️  Skipping $DEVICE_NAME (cloud device: $EXECUTION_TYPE)"
+    fi
 done
 
-echo "✓ All Appium servers started!"
+echo ""
+echo "════════════════════════════════════════"
+echo "✓ Appium server startup complete!"
 echo "Check logs in: logs/appium/"
+echo "════════════════════════════════════════"

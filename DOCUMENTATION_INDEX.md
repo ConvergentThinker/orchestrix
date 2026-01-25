@@ -58,6 +58,7 @@ Welcome to the comprehensive documentation for the Enterprise-Grade Parallel App
 ### Configuration
 | Document | Description | Audience |
 |----------|------------|----------|
+| [LOCAL_DEVICE_SETUP_GUIDE.md](LOCAL_DEVICE_SETUP_GUIDE.md) | Setup emulators and physical devices | All levels |
 | [ENV_FILE_SETUP.md](ENV_FILE_SETUP.md) | Environment variables | DevOps |
 | [config/README.md](config/README.md) | Device configuration | All levels |
 | [JSON_CONFIGURATION_GUIDE.md](JSON_CONFIGURATION_GUIDE.md) | JSON config details | Developers |
@@ -157,6 +158,7 @@ Use this checklist to ensure you have the information you need:
 
 **I want to...**
 - **Set up the framework**: [SETUP_GUIDE.md](SETUP_GUIDE.md)
+- **Set up local devices/emulators**: [LOCAL_DEVICE_SETUP_GUIDE.md](LOCAL_DEVICE_SETUP_GUIDE.md)
 - **Write my first test**: [USAGE_GUIDE.md](USAGE_GUIDE.md) → "Writing Your First Test"
 - **Understand architecture**: [TECHNICAL_GUIDE.md](TECHNICAL_GUIDE.md)
 - **See examples**: [REAL_WORLD_USE_CASES.md](REAL_WORLD_USE_CASES.md)

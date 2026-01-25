@@ -41,11 +41,19 @@ public class CucumberHooks {
         // Get device tier from scenario tags or use default
         String tier = getDeviceTierFromTags(scenario);
         
-        // Allocate device from pool
-        DeviceConfig device = devicePool.allocateDevice(tier);
+        // Allocate device from pool with intelligent wait mechanism
+        // - Waits indefinitely if other tests are running (devices will be released)
+        // - Fails after 60 seconds only if no other tests are running
+        DeviceConfig device = devicePool.allocateDeviceWithWait(tier);
         
         if (device == null) {
-            throw new RuntimeException("No available device for tier: " + tier);
+            logger.error("Failed to allocate device for tier: {} after waiting. Available devices: {}/{}", 
+                tier, 
+                devicePool.getAvailableDeviceCount(), 
+                devicePool.getTotalDeviceCount());
+            throw new RuntimeException("No available device for tier: " + tier + 
+                " after waiting. Total devices: " + devicePool.getTotalDeviceCount() + 
+                ", Available: " + devicePool.getAvailableDeviceCount());
         }
         
         deviceConfig.set(device);

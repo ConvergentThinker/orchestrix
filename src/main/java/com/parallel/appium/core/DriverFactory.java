@@ -10,6 +10,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
@@ -30,6 +31,10 @@ public class DriverFactory {
     // ThreadLocal storage for drivers
     // Each thread gets its own driver instance
     private static ThreadLocal<AppiumDriver> driver = new ThreadLocal<>();
+    
+    // ThreadLocal storage for session-specific ports (Android systemPort/chromedriverPort)
+    // These need to be released when driver quits
+    private static ThreadLocal<int[]> sessionPorts = new ThreadLocal<>();
     
     /**
      * Create driver for device
@@ -69,8 +74,42 @@ public class DriverFactory {
             
         } catch (Exception e) {
             logger.error("✗ Failed to create driver for: {}", device.getDeviceName(), e);
-            throw new RuntimeException("Driver creation failed", e);
+            RuntimeException toThrow = new RuntimeException("Driver creation failed", e);
+            if (!device.isCloudDevice() && isConnectException(e)) {
+                int port = resolveAppiumPort(device);
+                String hint = String.format(
+                    "Could not connect to Appium at http://127.0.0.1:%d. Is Appium running? " +
+                    "Start with: appium --port %d  OR  ./scripts/start-appium-nodes.sh  " +
+                    "If using default appium (port 4723), run: mvn test -Dappium.port=4723",
+                    port, port);
+                toThrow = new RuntimeException("Driver creation failed: " + hint, e);
+            }
+            throw toThrow;
         }
+    }
+
+    private static boolean isConnectException(Throwable t) {
+        for (Throwable x = t; x != null; x = x.getCause()) {
+            if (x instanceof ConnectException || (x.getMessage() != null && x.getMessage().contains("ConnectException"))) {
+                return true;
+            }
+            if (x instanceof java.io.UncheckedIOException && x.getCause() instanceof ConnectException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int resolveAppiumPort(DeviceConfig device) {
+        int port = device.getAppiumPort();
+        String override = System.getProperty("appium.port");
+        if (override != null && !override.isEmpty()) {
+            try {
+                return Integer.parseInt(override.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return port;
     }
 
     /**
@@ -103,11 +142,33 @@ public class DriverFactory {
             if ("Android".equalsIgnoreCase(device.getPlatformName())) {
                 // Android capabilities
                 capabilities.setCapability("automationName", "UiAutomator2");
-                capabilities.setCapability("systemPort", device.getSystemPort());
-                capabilities.setCapability("chromedriverPort", device.getChromedriverPort());
-                capabilities.setCapability("app", getAndroidAppPath());
-                capabilities.setCapability("appPackage", "com.yourapp.package");
-                capabilities.setCapability("appActivity", "com.yourapp.MainActivity");
+                
+                // Allocate systemPort and chromedriverPort per SESSION (not per device)
+                // Multiple parallel sessions on same device need unique ports
+                // Always allocate per session to avoid conflicts, even if device config has ports
+                PortManager portManager = PortManager.getInstance();
+                int systemPort = portManager.allocateSystemPort();
+                int chromePort = portManager.allocateChromedriverPort();
+                
+                capabilities.setCapability("systemPort", systemPort);
+                capabilities.setCapability("chromedriverPort", chromePort);
+                
+                // Store ports for release when driver quits
+                sessionPorts.set(new int[]{systemPort, chromePort});
+                
+                logger.debug("Allocated session ports: systemPort={}, chromedriverPort={} (device config ignored for parallel safety)", 
+                    systemPort, chromePort);
+                String appPath = getAndroidAppPath();
+                if (appPath != null && !appPath.isEmpty()) {
+                    capabilities.setCapability("app", appPath);
+                }
+                // appPackage/appActivity used for already-installed app, or with app
+                String pkg = device.getAppPackage() != null && !device.getAppPackage().isEmpty()
+                    ? device.getAppPackage() : "com.yourapp.package";
+                String act = device.getAppActivity() != null && !device.getAppActivity().isEmpty()
+                    ? device.getAppActivity() : "com.yourapp.MainActivity";
+                capabilities.setCapability("appPackage", pkg);
+                capabilities.setCapability("appActivity", act);
                 
             } else if ("iOS".equalsIgnoreCase(device.getPlatformName())) {
                 // iOS capabilities
@@ -220,7 +281,12 @@ public class DriverFactory {
             
         } else {
             // Local device - use local Appium server
-            String appiumUrl = String.format("http://127.0.0.1:%d", device.getAppiumPort());
+            // Allow override via -Dappium.port=4723 when running default `appium` (port 4723)
+            int port = resolveAppiumPort(device);
+            if (System.getProperty("appium.port") != null && !System.getProperty("appium.port").isEmpty()) {
+                logger.info("Using Appium port override: {} (-Dappium.port)", port);
+            }
+            String appiumUrl = String.format("http://127.0.0.1:%d", port);
             url = new URL(appiumUrl);
             logger.info("Using local Appium server: {}", url);
         }
@@ -274,18 +340,30 @@ public class DriverFactory {
             } catch (Exception e) {
                 logger.error("Error quitting driver", e);
             } finally {
+                // Release session-specific ports if they were auto-allocated
+                int[] ports = sessionPorts.get();
+                if (ports != null && ports.length == 2) {
+                    PortManager portManager = PortManager.getInstance();
+                    portManager.releasePort(ports[0]);  // systemPort
+                    portManager.releasePort(ports[1]);  // chromedriverPort
+                    logger.debug("Released session ports: systemPort={}, chromedriverPort={}", 
+                        ports[0], ports[1]);
+                }
+                
                 // CRITICAL: Remove from ThreadLocal to prevent memory leak
                 driver.remove();
+                sessionPorts.remove();
             }
         }
     }
 
     /**
-     * Get Android app path
-     * Override with system property: -Dandroid.app.path=/path/to/app.apk
+     * Get Android app path.
+     * Use -Dandroid.app.path=/path/to/app.apk to install and launch app.
+     * If not set, only appPackage/appActivity are used (already-installed app).
      */
     private static String getAndroidAppPath() {
-        return System.getProperty("android.app.path", "apps/android/sample-app.apk");
+        return System.getProperty("android.app.path", "");
     }
 
     /**

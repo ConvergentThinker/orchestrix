@@ -8,10 +8,10 @@ public class DeviceConfig {
     private String platformName;
     private String platformVersion;
     private String tier;
-    private int appiumPort;
-    private int systemPort;        // Android only
-    private int chromedriverPort;  // Android only
-    private int wdaLocalPort;      // iOS only
+    private int appiumPort = 0;        // 0 = auto-allocate, >0 = use specified port
+    private int systemPort = 0;        // Android only, 0 = auto-allocate
+    private int chromedriverPort = 0;  // Android only, 0 = auto-allocate
+    private int wdaLocalPort = 0;      // iOS only, 0 = auto-allocate
     private Map<String, Object> capabilities;
     
     // Cloud provider support
@@ -22,6 +22,8 @@ public class DeviceConfig {
     private String cloudDeviceName; // Cloud-specific device name/identifier
     private String tunnelId; // LambdaTest tunnel ID for local testing
     private String cloudAppUrl; // Cloud app URL (lt:// or bs:// format)
+    private String appPackage;  // Android app package (from devices.json)
+    private String appActivity; // Android main activity (from devices.json)
 
     // Getters and Setters
     public String getUdid() { return udid; }
@@ -106,4 +108,10 @@ public class DeviceConfig {
     public void setCloudAppUrl(String cloudAppUrl) { 
         this.cloudAppUrl = cloudAppUrl; 
     }
+
+    public String getAppPackage() { return appPackage; }
+    public void setAppPackage(String appPackage) { this.appPackage = appPackage; }
+
+    public String getAppActivity() { return appActivity; }
+    public void setAppActivity(String appActivity) { this.appActivity = appActivity; }
 }
