@@ -564,8 +564,8 @@ We welcome contributions! Here's how you can help:
 - 📖 **Documentation**: Check [Documentation Index](DOCUMENTATION_INDEX.md)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/orchestrix/discussions)
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/your-username/orchestrix/issues)
-- 📧 **Email**: support@your-website.com
-- 🌐 **Website**: [Visit our website](https://your-website.com)
+- 📧 **Email**: convergentthinker22@gmail.com
+- 🌐 **Website**: [Visit our website](https://orchestrix-beta.vercel.app/)
 
 ### Common Issues
 
@@ -749,8 +749,7 @@ If you find Orchestrix useful, please consider giving it a star ⭐
 
 ## 📞 Contact & Links
 
-- 🌐 **Website**: [your-website.com](https://your-website.com)
-- 📧 **Email**: support@your-website.com
+- 🌐 **Website**: [your-website.com](convergentthinker22@gmail.com)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/orchestrix/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/orchestrix/issues)
 - 📖 **Documentation**: [Full Documentation](DOCUMENTATION_INDEX.md)
