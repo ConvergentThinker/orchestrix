@@ -748,10 +748,9 @@ If you find Orchestrix useful, please consider giving it a star ⭐
 ---
 
 ## 📞 Contact & Links
-
-- 🌐 **Website**: [your-website.com](convergentthinker22@gmail.com)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/orchestrix/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/orchestrix/issues)
+- 🌐 **Website**: [orchestrix](https://orchestrix-beta.vercel.app/)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/ConvergentThinker/orchestrix/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/ConvergentThinker/orchestrix/issues)
 - 📖 **Documentation**: [Full Documentation](DOCUMENTATION_INDEX.md)
 
 ---
