@@ -6,16 +6,12 @@
     <test name="Premium Devices">
         <parameter name="device-tier" value="premium"/>
         <classes>
-            <class name="com.parallel.appium.tests.login.LoginTests">
-                <methods>
-                    <include name="testValidLogin"/>
-                    <include name="testInvalidLogin"/>
-                </methods>
+            <class name="com.parallel.appium.runners.CucumberTestRunner">
             </class>
         </classes>
     </test>
     
-    <!-- Standard Devices - Regular Tests -->
+<!--    &lt;!&ndash; Standard Devices - Regular Tests &ndash;&gt;
     <test name="Standard Devices">
         <parameter name="device-tier" value="standard"/>
         <classes>
@@ -25,6 +21,6 @@
                 </methods>
             </class>
         </classes>
-    </test>
+    </test>-->
     
 </suite>
