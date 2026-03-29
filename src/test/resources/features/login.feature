@@ -7,7 +7,7 @@ Feature: User Login
   Background:
     Given the app is launched
 
-  @premium @TC001
+  @premium @TC_Kiki
   Scenario: Successful login with valid credentials
     Given I am on the login page
     When I login with username "testuser@example.com" and password "Test@123"

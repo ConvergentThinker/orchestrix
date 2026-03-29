@@ -6,7 +6,7 @@
     "platformVersion": "14",
     "tier": "premium",
     "executionType": "local",
-    "appPackage": "com..mf",
+    "appPackage": "com.geojit.mf",
     "appActivity": ".MainActivity"
   }
 
