@@ -132,6 +132,7 @@ public class DriverFactory {
         // UDID only for local devices
         if (!device.isCloudDevice() && device.getUdid() != null) {
             capabilities.setCapability("udid", device.getUdid());
+            logger.info("<<<<<<<< Using UDID >>>>>>>>> ");
         }
         
         capabilities.setCapability("newCommandTimeout", 300);
@@ -287,6 +288,7 @@ public class DriverFactory {
                 logger.info("Using Appium port override: {} (-Dappium.port)", port);
             }
             String appiumUrl = String.format("http://127.0.0.1:%d", port);
+                logger.info("<<< appiumUrl >>>>>> "+appiumUrl );
             url = new URL(appiumUrl);
             logger.info("Using local Appium server: {}", url);
         }
