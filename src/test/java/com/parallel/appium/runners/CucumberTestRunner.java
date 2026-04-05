@@ -24,7 +24,7 @@ import org.testng.annotations.DataProvider;
         // "com.aventstack.extentreports.cucumber.adapter.ExtentCucumberAdapter:"
     },
     monochrome = true,
-    tags = "@e2e"
+    tags = "@login"
 )
 public class CucumberTestRunner extends AbstractTestNGCucumberTests {
 
