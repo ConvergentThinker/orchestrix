@@ -32,7 +32,7 @@ public class LoginStepDefinitions {
         logger.info("Navigating to login page for invalid credentials test");
         loginPage = new LoginPage();
        // Assert.assertTrue(loginPage.isPageLoaded(), 
-            "Login page should be loaded");
+         //   "Login page should be loaded");
     }
 
     @When("I enter username {string} and password {string}")
