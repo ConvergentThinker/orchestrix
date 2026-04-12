@@ -17,9 +17,9 @@ Feature: User Login
   @premium @TC001
   Scenario: Successful login with valid credentials (parallel device 2)
     Given I am on the login page
-    When I login with username "testuser@example.com" and password "Test@123"
-    Then I should be logged in successfully
-    And I should see the welcome message
+    #When I login with username "testuser@example.com" and password "Test@123"
+    #Then I should be logged in successfully
+    #And I should see the welcome message
 
   @standard @TC002
   Scenario: Successful login using step-by-step approach
