@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- 
+    IMPORTANT: Set thread-count and data-provider-thread-count to match available devices
+    Example: If you have 2 devices in devices.json, set both to 2
+    This ensures tests run in parallel only when devices are available
+-->
+<suite name="Cucumber BDD Test Suite" parallel="methods" thread-count="2" verbose="1"
+       data-provider-thread-count="2">
+    
+    <!-- Cucumber Test Runner: scenarios run in parallel via DataProvider -->
+    <test name="Cucumber BDD Tests">
+        <classes>
+            <class name="testorbit.runners.CucumberTestRunner"/>
+        </classes>
+    </test>
+    
+    <!-- You can also run traditional TestNG tests alongside Cucumber -->
+    <!--
+    <test name="Traditional TestNG Tests">
+        <parameter name="device-tier" value="premium"/>
+        <classes>
+            <class name="testorbit.tests.login.LoginTests">
+                <methods>
+                    <include name="testValidLogin"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    -->
+    
+</suite>
