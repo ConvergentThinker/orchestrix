@@ -1,0 +1,25 @@
+# Environment files
+.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build
+target/
+*.class
+*.jar
+*.war
+
+# Logs
+*.log
+logs/
+
+# Reports
+reports/
+test-results/
+
+# OS
+.DS_Store
+Thumbs.db
