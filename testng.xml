@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Parallel Appium Test Suite" parallel="methods" thread-count="3" verbose="1">
+    
+    <!-- Premium Devices - High Priority Tests -->
+    <test name="Premium Devices">
+        <parameter name="device-tier" value="premium"/>
+        <classes>
+            <class name="testorbit.tests.login.LoginTests">
+                <methods>
+                    <include name="testValidLogin"/>
+                    <include name="testInvalidLogin"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    
+    <!-- Standard Devices - Regular Tests -->
+    <test name="Standard Devices">
+        <parameter name="device-tier" value="standard"/>
+        <classes>
+            <class name="testorbit.tests.login.LoginTests">
+                <methods>
+                    <include name="testValidLogin"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+    
+</suite>
