@@ -1,0 +1,20 @@
+{
+  "defaultMaxRetries": 3,
+  "retryDelayMs": 2000,
+  "exponentialBackoff": true,
+  "testSpecificRetries": {
+    "LoginTests.testValidLogin": 5,
+    "CheckoutTests.testCompleteCheckout": 4,
+    "PaymentTests.testPayment": 5
+  },
+  "retryableExceptions": [
+    "StaleElementReferenceException",
+    "NoSuchElementException",
+    "TimeoutException",
+    "ElementNotInteractableException"
+  ],
+  "nonRetryableExceptions": [
+    "AssertionError",
+    "NullPointerException"
+  ]
+}
