@@ -1,0 +1,13 @@
+[
+  {
+    "udid": "emulator-5554",
+    "deviceName": "Pixel 4",
+    "platformName": "Android",
+    "platformVersion": "13",
+    "appiumPort": 4723,
+    "tier": "premium",
+    "executionType": "local",
+    "appPackage": "testorbit",
+    "appActivity": ".MainActivity"
+  }
+]
